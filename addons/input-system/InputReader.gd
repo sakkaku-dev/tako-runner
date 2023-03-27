@@ -2,8 +2,7 @@ class_name InputReader
 extends Node
 
 signal disabled(disable)
-signal just_pressed(ev: InputEvent)
-signal just_released(ev: InputEvent)
+signal just_received(ev: InputEvent)
 
 var input_types = InputMap.get_actions()
 
@@ -35,11 +34,11 @@ func _register_action(event: InputEvent, action: String):
 	if event.is_action_pressed(action):
 		if not inputs.has(action):
 			inputs.append(action)
-			emit_signal("just_pressed", event)
+			just_received.emit(event)
 	if event.is_action_released(action):
 		if inputs.has(action):
 			inputs.erase(action)
-			emit_signal("just_released", event)
+			just_received.emit(event)
 
 
 func _get_actions_for_event(event: InputEvent) -> Array:

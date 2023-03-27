@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://cv31vba8rma3m" path="res://src/player/player.tscn" id="1_5wt6d"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3h21x"]
-size = Vector2(3000, 8)
+size = Vector2(1000, 8)
 
 [node name="Game" type="Node2D"]
 
@@ -11,7 +11,7 @@ size = Vector2(3000, 8)
 position = Vector2(0, -146)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
-position = Vector2(0, 18)
+position = Vector2(0, 195)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
@@ -22,4 +22,12 @@ position = Vector2(0, -211)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
+shape = SubResource("RectangleShape2D_3h21x")
+
+[node name="StaticBody2D3" type="StaticBody2D" parent="."]
+position = Vector2(604, -90)
+rotation = 1.5708
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D3"]
 shape = SubResource("RectangleShape2D_3h21x")
