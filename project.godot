@@ -29,8 +29,8 @@ gdscript/warnings/return_value_discarded=false
 
 [display]
 
-window/size/viewport_width=480
-window/size/viewport_height=270
+window/size/viewport_width=640
+window/size/viewport_height=360
 window/stretch/mode="canvas_items"
 window/size/width=1920
 window/size/height=1080
@@ -122,5 +122,6 @@ locale_filter=[0, []]
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 environment/default_clear_color=Color(0.101961, 0.101961, 0.101961, 1)
 environment/default_environment="res://default_env.tres"

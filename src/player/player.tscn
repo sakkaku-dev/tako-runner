@@ -15,9 +15,6 @@ raycast = NodePath("RayCast2D")
 [node name="PlayerInput" type="Node" parent="."]
 script = ExtResource("2_j3jxp")
 
-[node name="Camera2D" type="Camera2D" parent="."]
-zoom = Vector2(0.5, 0.5)
-
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_82u8f")
 
