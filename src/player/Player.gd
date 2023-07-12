@@ -15,9 +15,9 @@ enum {
 
 @export var speed := 500
 @export var accel := 800
-@export var jump_force := 600
+@export var jump_force := 300
 
-@export var pull_force := 0.25
+@export var pull_force := 0.1
 @export var max_pull_force := 100.0
 @export var tentacle_length := 400
 @export var dampening := 0.02
@@ -64,6 +64,11 @@ func _swing(delta):
 	
 	var dir = global_position.direction_to(connected_point)
 	var dist = global_position.distance_to(connected_point)
+	
+#	if dist < 10 and _is_touching():
+#		state = STICK
+#		return
+	
 	var displacement = dist
 	var force = pull_force * displacement
 	if force > max_pull_force:
@@ -76,7 +81,14 @@ func _stick(delta):
 	velocity = Vector2.ZERO
 
 func _jump(delta):
-	velocity += Vector2.UP * jump_force
+	var dir = Vector2.UP
+	
+	if is_on_wall():
+		var normal = raycast.get_collision_normal()
+		dir = dir + normal
+		connected_point = null
+	
+	velocity += dir * jump_force
 	state = MOVE
 
 func _on_player_input_just_received(ev: InputEvent):
