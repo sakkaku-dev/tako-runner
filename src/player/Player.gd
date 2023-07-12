@@ -6,17 +6,18 @@ extends CharacterBody2D
 @export var vertical_speed := 200
 @export var vertical_accel := 100
 
-@export var speed := 800
-@export var accel := 500
+@export var speed := 500
+@export var accel := 800
 @export var jump_force := 600
 
-@export var tentacle_length := 200
+@export var pull_force := 0.25
+@export var max_pull_force := 100.0
+@export var tentacle_length := 400
 @export var dampening := 0.02
 
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 
 var connected_point
-var resting_length := 0
 
 func _ready():
 	raycast.target_position = Vector2.DOWN * tentacle_length
@@ -27,21 +28,37 @@ func _process(delta):
 	else:
 		raycast.global_rotation = Vector2.DOWN.angle_to(global_position.direction_to(get_global_mouse_position()))
 
+func _is_touching_wall_or_ceiling():
+	return is_on_ceiling() or is_on_wall()
+
 func _physics_process(delta):
 	var motion_x = input.get_action_strength("move_left") - input.get_action_strength("move_right")
-	velocity.x = move_toward(velocity.x, motion_x * speed, accel * delta)
-	velocity += gravity
 	
 	if connected_point:
-		var dir = global_position.direction_to(connected_point)
-		var displacement = -(resting_length - global_position.distance_to(connected_point))
-		var tension = 0.3
-		
-		velocity += dir * tension * displacement# - dampening * velocity
-		
-		var motion_y = input.get_action_strength("move_down") - input.get_action_strength("move_up")
-		if motion_y != 0:
-			velocity.y = move_toward(velocity.y, motion_y * vertical_speed, vertical_accel * delta)
+		if _is_touching_wall_or_ceiling():
+			velocity = Vector2.ZERO
+		else:
+			var dir = global_position.direction_to(connected_point)
+			var dist = global_position.distance_to(connected_point)
+			var displacement = dist
+			var force = pull_force * displacement
+			if force > max_pull_force:
+				force = max_pull_force
+			
+			velocity += dir * force - dampening * velocity
+			velocity += gravity
+	else:
+		velocity.x = move_toward(velocity.x, motion_x * speed, accel * delta)
+		velocity += gravity
+
+#		var displacement = -(resting_length - global_position.distance_to(connected_point))
+#		var tension = 0.3
+#
+#		velocity += dir * tension * displacement - dampening * velocity
+#
+#		var motion_y = input.get_action_strength("move_down") - input.get_action_strength("move_up")
+#		if motion_y != 0:
+#			velocity.y = move_toward(velocity.y, motion_y * vertical_speed, vertical_accel * delta)
 
 # Hooke's Law
 # Force = Tension * Displacement (TargetHeight - Height)
@@ -60,7 +77,7 @@ func _on_player_input_just_received(ev: InputEvent):
 
 	if ev.is_action_pressed("fire") and raycast.is_colliding():
 		connected_point = raycast.get_collision_point()
-		resting_length = global_position.distance_to(connected_point)
+#		resting_length = global_position.distance_to(connected_point)
 
 	if ev.is_action_released("fire"):
 		connected_point = null

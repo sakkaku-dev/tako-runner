@@ -1,17 +1,31 @@
-[gd_scene load_steps=3 format=3 uid="uid://bkq6prefpbjqs"]
+[gd_scene load_steps=5 format=3 uid="uid://bkq6prefpbjqs"]
 
 [ext_resource type="PackedScene" uid="uid://cv31vba8rma3m" path="res://src/player/player.tscn" id="1_5wt6d"]
+[ext_resource type="Texture2D" uid="uid://6pk8o2koeau3" path="res://assets/BG.png" id="1_pybjc"]
+[ext_resource type="Theme" uid="uid://cvvavdkxk7llv" path="res://theme/theme.tres" id="2_hw76v"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3h21x"]
-size = Vector2(1000, 8)
+size = Vector2(5186, 54)
 
 [node name="Game" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(750, 0)
+scale = Vector2(5.21481, 5.21481)
+texture = ExtResource("1_pybjc")
 
 [node name="Player" parent="." instance=ExtResource("1_5wt6d")]
 position = Vector2(0, -146)
 
+[node name="Label" type="Label" parent="Player"]
+offset_top = -22.0
+offset_right = 40.0
+offset_bottom = 1.0
+theme = ExtResource("2_hw76v")
+text = "Test"
+
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
-position = Vector2(0, 195)
+position = Vector2(0, 183)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
@@ -25,7 +39,7 @@ collision_mask = 0
 shape = SubResource("RectangleShape2D_3h21x")
 
 [node name="StaticBody2D3" type="StaticBody2D" parent="."]
-position = Vector2(604, -90)
+position = Vector2(2007, -90)
 rotation = 1.5708
 collision_mask = 0
 
