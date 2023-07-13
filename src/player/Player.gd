@@ -52,8 +52,11 @@ func _physics_process(delta):
 	
 	move_and_slide()
 
+func _get_motion():
+	return input.get_action_strength("move_left") - input.get_action_strength("move_right")
+
 func _move(delta):
-	var motion_x = input.get_action_strength("move_left") - input.get_action_strength("move_right")
+	var motion_x = _get_motion()
 	velocity.x = move_toward(velocity.x, motion_x * speed, accel * delta)
 	velocity += gravity
 
@@ -82,12 +85,13 @@ func _stick(delta):
 
 func _jump(delta):
 	var dir = Vector2.UP
+	var motion_x = _get_motion()
+	var normal = raycast.get_collision_normal()
 	
-	if is_on_wall():
-		var normal = raycast.get_collision_normal()
-		dir = dir + normal
-		connected_point = null
-	
+	if is_on_wall() and normal.dot(Vector2(motion_x, 0)) > 0:
+		dir = dir + Vector2(motion_x, 0)
+		
+	connected_point = null
 	velocity += dir * jump_force
 	state = MOVE
 
