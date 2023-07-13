@@ -96,7 +96,7 @@ func _jump(delta):
 	state = MOVE
 
 func _on_player_input_just_received(ev: InputEvent):
-	if ev.is_action_pressed("jump") and _is_touching():
+	if ev.is_action_pressed("jump") and (is_on_floor() or connected_point != null and _is_touching()):
 		state = JUMP
 
 	if ev.is_action_pressed("fire") and raycast.is_colliding():

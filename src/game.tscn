@@ -1,7 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://bkq6prefpbjqs"]
+[gd_scene load_steps=8 format=3 uid="uid://bkq6prefpbjqs"]
 
 [ext_resource type="PackedScene" uid="uid://cv31vba8rma3m" path="res://src/player/player.tscn" id="1_5wt6d"]
+[ext_resource type="Texture2D" uid="uid://bgx8nfmpsmajm" path="res://assets/BG_Front.png" id="3_8tnbu"]
+[ext_resource type="Texture2D" uid="uid://bwxomxog8rgp6" path="res://assets/BG_Mid.png" id="4_f2jj8"]
 [ext_resource type="Texture2D" uid="uid://347tprxv386t" path="res://assets/Tiles.png" id="4_ytjgc"]
+[ext_resource type="Texture2D" uid="uid://m877ri46cheq" path="res://assets/BG_Back.png" id="5_2ha4u"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_u1an0"]
 texture = ExtResource("4_ytjgc")
@@ -509,3 +512,29 @@ layer_0/tile_data = PackedInt32Array(65553, 720897, 3, 17, 720897, 2, -65519, 72
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(0, -146)
 limit_bottom = 0
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.1, 1)
+motion_mirroring = Vector2(1280, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer"]
+position = Vector2(0, -200)
+texture = ExtResource("5_2ha4u")
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.3, 1)
+motion_mirroring = Vector2(1280, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer2"]
+position = Vector2(0, -200)
+texture = ExtResource("4_f2jj8")
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.5, 1)
+motion_mirroring = Vector2(1280, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer3"]
+position = Vector2(0, -200)
+texture = ExtResource("3_8tnbu")
