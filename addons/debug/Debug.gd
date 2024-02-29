@@ -50,13 +50,6 @@ func _ready():
 	_logging_cmd()
 
 
-func _unhandled_input(event):
-	if event.is_action_pressed("dev"):
-		visible = !visible
-		if visible:
-			input.grab_focus()
-
-
 func print_line(str: String):
 	if lines.get_child_count() >= max_lines:
 		lines.remove_child(lines.get_child(0))
