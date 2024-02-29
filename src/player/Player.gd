@@ -5,16 +5,18 @@ enum {
 	STICK,
 	SWING,
 	JUMP,
+	PULL,
 }
 
 @export var input: PlayerInput
 @export var raycast: RayCast2D
+@export var ground_cast: RayCast2D
 
 @export var speed := 400
 @export var accel := 800
 @export var jump_force := 300
 
-@export var tentacle_length := 400
+@export var tentacle_length := 200
 @export var pull_force := 0.7
 @export var max_pull_force := 100.0
 @export var dampening := 0.1
@@ -23,12 +25,15 @@ enum {
 @export var decrease_swing_dist := 50
 
 @export var sticky_delay := 0.3
+@export var pull_speed := 50
 
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 
+var reduce_swing_dist := 0.0
 var swing_dist := 0.0
 var connected_point
 var delay := 0.0
+
 var state = MOVE
 
 func _ready():
@@ -50,6 +55,7 @@ func _physics_process(delta):
 		SWING: _swing(delta)
 		STICK: _stick(delta)
 		JUMP: _jump(delta)
+		PULL: _pull(delta)
 	
 	move_and_slide()
 
@@ -59,6 +65,14 @@ func _get_motion():
 		input.get_action_strength("move_down") - input.get_action_strength("move_up")
 	)
 
+func _pull(delta):
+	var dir = global_position.direction_to(connected_point)
+	velocity += dir * pull_speed
+	velocity += gravity
+	
+	if delay >= sticky_delay and _is_touching():
+		self.state = STICK
+
 func _move(delta):
 	var motion_x = _get_motion().x
 	velocity.x = move_toward(velocity.x, motion_x * speed, accel * delta)
@@ -66,16 +80,25 @@ func _move(delta):
 
 func _swing(delta):
 	if delay >= sticky_delay and _is_touching():
-		state = STICK
+		self.state = STICK
 		return
 	
 	var dir = global_position.direction_to(connected_point)
 	var current_dist = global_position.distance_to(connected_point)
 	var motion = _get_motion()
+	
+	if ground_cast.is_colliding():
+		var collision = ground_cast.get_collision_point()
+		var dist = global_position.distance_to(collision)
+		var relative = dist / ground_cast.target_position.y
+		reduce_swing_dist += 500 / max(relative, 0.01)
+	else:
+		reduce_swing_dist = 0
 		
 	# https://stackoverflow.com/questions/75195734/descending-pendulum-motion-in-physics-process
 	var gravity_speed = 1500 #30000
 	var air_resistance = -200
+	var swing_length = swing_dist - reduce_swing_dist
 		
 	velocity.y += gravity_speed * delta
 	velocity += (velocity.normalized() * air_resistance * delta).limit_length(velocity.length())
@@ -87,7 +110,7 @@ func _swing(delta):
 	velocity.x = velocity.x + velocity.y*sin_theta*cos_theta - velocity.x*cos_theta*cos_theta
 	velocity.y = velocity.y + velocity.x*sin_theta*cos_theta - velocity.y*sin_theta*sin_theta
 
-	var tension = clamp(current_dist - swing_dist, 0, 1) * gravity_speed
+	var tension = clamp(current_dist - swing_length, 0, 1) * gravity_speed
 	velocity += dir * tension * delta
 	
 	velocity.x += motion.x * swing_move_force
@@ -105,17 +128,21 @@ func _jump(delta):
 		
 	connected_point = null
 	velocity += dir * jump_force
-	state = MOVE
+	self.state = MOVE
 
 func _on_player_input_just_received(ev: InputEvent):
 	if ev.is_action_pressed("jump") and (is_on_floor() or connected_point != null and _is_touching()):
-		state = JUMP
+		self.state = JUMP
 	elif ev.is_action_pressed("fire") and raycast.is_colliding():
 		delay = 0
+		reduce_swing_dist = 0.0
+		swing_dist = 0.0
 		connected_point = raycast.get_collision_point()
 		swing_dist = global_position.distance_to(connected_point)
-		state = SWING
-	elif ev.is_action_released("fire"):
+		self.state = SWING
+	elif ev.is_action_released("fire") or ev.is_action_released("pull"):
 		connected_point = null
-		state = MOVE
-
+		self.state = MOVE
+	elif ev.is_action_pressed("pull") and raycast.is_colliding():
+		connected_point = raycast.get_collision_point()
+		self.state = PULL
