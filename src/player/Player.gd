@@ -1,3 +1,4 @@
+class_name Player
 extends CharacterBody2D
 
 enum {
@@ -12,137 +13,84 @@ enum {
 @export var raycast: RayCast2D
 @export var ground_cast: RayCast2D
 
-@export var speed := 400
-@export var accel := 800
-@export var jump_force := 300
-
-@export var tentacle_length := 200
-@export var pull_force := 0.7
-@export var max_pull_force := 100.0
-@export var dampening := 0.1
-
-@export var swing_move_force := 5
-@export var decrease_swing_dist := 50
-
 @export var sticky_delay := 0.3
-@export var pull_speed := 50
 
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
+@onready var koyori_timer = $KoyoriTimer
+@onready var contact = $Contact
 
-var reduce_swing_dist := 0.0
-var swing_dist := 0.0
-var connected_point
-var delay := 0.0
+@onready var states := {
+	MOVE: $States/Move,
+	SWING: $States/Swing,
+	STICK: $States/Stick,
+	JUMP: $States/Jump,
+}
 
-var state = MOVE
+var connected_point:
+	set(v):
+		connected_point = v
+		if v:
+			contact.show()
+			contact.global_position = v
+		else:
+			contact.hide()
 
+var state = MOVE:
+	set(s):
+		_get_state().exit(self)
+		state = s
+		_get_state().enter(self)
+
+func _get_state(s = state):
+	return states[s]
+	
 func _ready():
-	raycast.target_position = Vector2.DOWN * tentacle_length
-
-func _is_touching():
-	return is_on_ceiling() or is_on_wall()
+	contact.hide()
 
 func _process(delta):
 	if connected_point != null:
-		delay += delta
 		raycast.global_rotation = Vector2.DOWN.angle_to(global_position.direction_to(connected_point))
 	else:
-		raycast.global_rotation = Vector2.DOWN.angle_to(global_position.direction_to(get_global_mouse_position()))
+		var dir = global_position.direction_to(get_global_mouse_position())
+		raycast.global_rotation = Vector2.DOWN.angle_to(dir)
 		
 func _physics_process(delta):
-	match state:
-		MOVE: _move(delta)
-		SWING: _swing(delta)
-		STICK: _stick(delta)
-		JUMP: _jump(delta)
-		PULL: _pull(delta)
-	
+	_get_state().process(self, delta)
 	move_and_slide()
 
-func _get_motion():
+func get_motion():
 	return Vector2(
 		input.get_action_strength("move_left") - input.get_action_strength("move_right"),
 		input.get_action_strength("move_down") - input.get_action_strength("move_up")
 	)
 
-func _pull(delta):
-	var dir = global_position.direction_to(connected_point)
-	velocity += dir * pull_speed
-	velocity += gravity
-	
-	if delay >= sticky_delay and _is_touching():
-		self.state = STICK
-
-func _move(delta):
-	var motion_x = _get_motion().x
-	velocity.x = move_toward(velocity.x, motion_x * speed, accel * delta)
-	velocity += gravity
-
-func _swing(delta):
-	if delay >= sticky_delay and _is_touching():
-		self.state = STICK
-		return
-	
-	var dir = global_position.direction_to(connected_point)
-	var current_dist = global_position.distance_to(connected_point)
-	var motion = _get_motion()
-	
-	if ground_cast.is_colliding():
-		var collision = ground_cast.get_collision_point()
-		var dist = global_position.distance_to(collision)
-		var relative = dist / ground_cast.target_position.y
-		reduce_swing_dist += 500 / max(relative, 0.01)
-	else:
-		reduce_swing_dist = 0
-		
-	# https://stackoverflow.com/questions/75195734/descending-pendulum-motion-in-physics-process
-	var gravity_speed = 1500 #30000
-	var air_resistance = -200
-	var swing_length = swing_dist - reduce_swing_dist
-		
-	velocity.y += gravity_speed * delta
-	velocity += (velocity.normalized() * air_resistance * delta).limit_length(velocity.length())
-
-	#pendulum motion
-	var theta=Vector2.RIGHT.angle_to(connected_point - global_position) * -1 # angle between local x_axis & pivot point vector 
-	var sin_theta=sin(theta)
-	var cos_theta=cos(theta)
-	velocity.x = velocity.x + velocity.y*sin_theta*cos_theta - velocity.x*cos_theta*cos_theta
-	velocity.y = velocity.y + velocity.x*sin_theta*cos_theta - velocity.y*sin_theta*sin_theta
-
-	var tension = clamp(current_dist - swing_length, 0, 1) * gravity_speed
-	velocity += dir * tension * delta
-	
-	velocity.x += motion.x * swing_move_force
-
-func _stick(delta):
-	velocity = Vector2.ZERO
-
-func _jump(delta):
-	var dir = Vector2.UP
-	var motion_x = _get_motion().x
-	var normal = raycast.get_collision_normal()
-	
-	if is_on_wall() and normal.dot(Vector2(motion_x, 0)) > 0:
-		dir = dir + Vector2(motion_x, 0)
-		
-	connected_point = null
-	velocity += dir * jump_force
-	self.state = MOVE
-
 func _on_player_input_just_received(ev: InputEvent):
-	if ev.is_action_pressed("jump") and (is_on_floor() or connected_point != null and _is_touching()):
+	if ev.is_action_pressed("jump") and (koyori_timer.can_jump() or connected_point != null):
 		self.state = JUMP
 	elif ev.is_action_pressed("fire") and raycast.is_colliding():
-		delay = 0
-		reduce_swing_dist = 0.0
-		swing_dist = 0.0
-		connected_point = raycast.get_collision_point()
-		swing_dist = global_position.distance_to(connected_point)
+		self.connected_point = raycast.get_collision_point()
 		self.state = SWING
-	elif ev.is_action_released("fire") or ev.is_action_released("pull"):
-		connected_point = null
+	elif ev.is_action_released("fire"):
+		remove_contact()
 		self.state = MOVE
-	elif ev.is_action_pressed("pull") and raycast.is_colliding():
-		connected_point = raycast.get_collision_point()
-		self.state = PULL
+
+func remove_contact():
+	self.connected_point = null
+
+func get_contact_normal():
+	return raycast.get_collision_normal()
+
+func get_contact_distance() -> float:
+	if connected_point == null:
+		return 0.0
+	return global_position.distance_to(connected_point)
+
+func get_contact_direction() -> Vector2:
+	if connected_point == null:
+		return Vector2.ZERO
+	return global_position.direction_to(connected_point)
+
+func get_contact_point() -> Vector2:
+	if connected_point == null:
+		return Vector2.ZERO
+	return connected_point - global_position
