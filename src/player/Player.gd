@@ -18,6 +18,9 @@ enum {
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 @onready var koyori_timer = $KoyoriTimer
 @onready var contact = $Contact
+@onready var jump_buffer = $JumpBuffer
+@onready var animation_player = $AnimationPlayer
+@onready var sprite_2d = $CollisionShape2D/Sprite2D
 
 @onready var states := {
 	MOVE: $States/Move,
@@ -46,6 +49,7 @@ func _get_state(s = state):
 	
 func _ready():
 	contact.hide()
+	jump_buffer.jump.connect(func(): self.state = JUMP)
 
 func _process(delta):
 	if connected_point != null:
@@ -65,8 +69,11 @@ func get_motion():
 	)
 
 func _on_player_input_just_received(ev: InputEvent):
-	if ev.is_action_pressed("jump") and (koyori_timer.can_jump() or connected_point != null):
-		self.state = JUMP
+	if ev.is_action_pressed("jump"):
+		if (koyori_timer.can_jump() or connected_point != null):
+			self.state = JUMP
+		else:
+			jump_buffer.buffer_jump()
 	elif ev.is_action_pressed("fire") and raycast.is_colliding():
 		self.connected_point = raycast.get_collision_point()
 		self.state = SWING
@@ -94,3 +101,6 @@ func get_contact_point() -> Vector2:
 	if connected_point == null:
 		return Vector2.ZERO
 	return connected_point - global_position
+
+func flip(flipped: bool):
+	sprite_2d.scale.x = -1 if flipped else 1

@@ -1,23 +1,20 @@
 extends State
 
-@export var pull_force := 0.7
-@export var max_pull_force := 100.0
-@export var dampening := 0.1
-
 @export var swing_move_force := 5
 @export var decrease_swing_dist := 50
-@export var speed := 300
-@export var accel := 800
+@export var stick_delay := 0.1
 
 @export var pull_speed := 100
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 
 var reduce_swing_dist := 0.0
 var swing_dist := 0.0
+var time := 0.0
 
 func enter(p: Player):
 	reduce_swing_dist = 0.0
 	swing_dist = 0.0
+	time = .0
 	swing_dist = p.get_contact_point().length()
 
 func process(p: Player, delta: float):
@@ -27,6 +24,12 @@ func process(p: Player, delta: float):
 	var motion = p.get_motion()
 	var normal = p.get_contact_normal()
 	
+	p.animation_player.play("jump")
+	if motion.x:
+		p.flip(motion.x < 0)
+	else:
+		p.flip(p.velocity.x < 0)
+	
 	#if p.ground_cast.is_colliding():
 		#var collision = p.ground_cast.get_collision_point()
 		#var dist = p.global_position.distance_to(collision)
@@ -35,11 +38,9 @@ func process(p: Player, delta: float):
 	#else:
 		#reduce_swing_dist = 0
 	
-	var contact_floor: bool = normal.dot(Vector2.UP) > 0.8 #and normal.dot(dir) <= -0.8
-	if contact_floor:
-		p.velocity += gravity
-		p.velocity.x = move_toward(p.velocity.x, motion.x * speed, accel * delta)
-	else:
+	var contact_ceiling: bool = normal.dot(Vector2.DOWN) > 0.8 #and normal.dot(dir) <= -0.8
+	
+	if contact_ceiling:
 		# https://stackoverflow.com/questions/75195734/descending-pendulum-motion-in-physics-process
 		var gravity_speed = 1500 #30000
 		var air_resistance = -200
@@ -57,11 +58,17 @@ func process(p: Player, delta: float):
 
 		var tension = clamp(current_dist - swing_length, 0, 1) * gravity_speed
 		p.velocity += dir * tension * delta
-		
+	
 		if Input.is_action_pressed("pull"):
 			p.velocity += dir * pull_speed
-		
+			
 		p.velocity.x += motion.x * swing_move_force
+	else:
+		p.velocity += dir * pull_speed
 	
 	if p.is_on_wall() or p.is_on_ceiling() or p.is_on_floor():
-		p.state = Player.STICK
+		time += delta
+		if time >= stick_delay:
+			p.state = Player.STICK
+	else:
+		time = .0
