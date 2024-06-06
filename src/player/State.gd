@@ -9,3 +9,6 @@ func exit(p: Player):
 	
 func process(p: Player, delta: float):
 	pass
+
+func handle(p: Player, ev: InputEvent):
+	pass

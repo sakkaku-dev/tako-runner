@@ -68,7 +68,11 @@ func process(p: Player, delta: float):
 	
 	if p.is_on_wall() or p.is_on_ceiling() or p.is_on_floor():
 		time += delta
-		if time >= stick_delay:
-			p.state = Player.STICK
+		#if time >= stick_delay:
+		p.state = Player.State.STICK
 	else:
 		time = .0
+
+func handle(p: Player, ev: InputEvent):
+	if ev.is_action_released("fire"):
+		p.state = Player.State.MOVE

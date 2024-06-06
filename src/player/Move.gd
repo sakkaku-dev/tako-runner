@@ -16,3 +16,10 @@ func process(p: Player, delta: float):
 
 	p.velocity.x = move_toward(p.velocity.x, motion_x * speed, accel * delta)
 	p.velocity += gravity
+	
+	if p.is_on_wall() or p.is_on_ceiling():
+		#time += delta
+		#if time >= stick_delay:
+		p.state = Player.State.STICK
+
+	

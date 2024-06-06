@@ -1,7 +1,7 @@
 class_name Player
 extends CharacterBody2D
 
-enum {
+enum State {
 	MOVE,
 	STICK,
 	SWING,
@@ -12,6 +12,7 @@ enum {
 @export var input: PlayerInput
 @export var raycast: RayCast2D
 @export var ground_cast: RayCast2D
+@export var stick_cast: RayCast2D
 
 @export var sticky_delay := 0.3
 
@@ -23,10 +24,10 @@ enum {
 @onready var sprite_2d = $CollisionShape2D/Sprite2D
 
 @onready var states := {
-	MOVE: $States/Move,
-	SWING: $States/Swing,
-	STICK: $States/Stick,
-	JUMP: $States/Jump,
+	State.MOVE: $States/Move,
+	State.SWING: $States/Swing,
+	State.STICK: $States/Stick,
+	State.JUMP: $States/Jump,
 }
 
 var connected_point:
@@ -38,10 +39,11 @@ var connected_point:
 		else:
 			contact.hide()
 
-var state = MOVE:
+var state = State.MOVE:
 	set(s):
 		_get_state().exit(self)
 		state = s
+		print("Enter state: %s" % State.keys()[state])
 		_get_state().enter(self)
 
 func _get_state(s = state):
@@ -49,7 +51,7 @@ func _get_state(s = state):
 	
 func _ready():
 	contact.hide()
-	jump_buffer.jump.connect(func(): self.state = JUMP)
+	jump_buffer.jump.connect(func(): self.state = State.JUMP)
 
 func _process(delta):
 	if connected_point != null:
@@ -61,6 +63,11 @@ func _process(delta):
 func _physics_process(delta):
 	_get_state().process(self, delta)
 	move_and_slide()
+	
+	var last_collision = get_last_slide_collision()
+	if last_collision:
+		var n = last_collision.get_normal()
+		stick_cast.target_position = -n * 20
 
 func get_motion():
 	return Vector2(
@@ -71,18 +78,23 @@ func get_motion():
 func _on_player_input_just_received(ev: InputEvent):
 	if ev.is_action_pressed("jump"):
 		if (koyori_timer.can_jump() or connected_point != null):
-			self.state = JUMP
+			self.state = State.JUMP
 		else:
 			jump_buffer.buffer_jump()
 	elif ev.is_action_pressed("fire") and raycast.is_colliding():
 		self.connected_point = raycast.get_collision_point()
-		self.state = SWING
-	elif ev.is_action_released("fire"):
-		remove_contact()
-		self.state = MOVE
+		self.state = State.SWING
+	else:
+		_get_state().handle(self, ev)
 
 func remove_contact():
 	self.connected_point = null
+
+func get_stick_normal():
+	return -stick_cast.target_position.normalized()
+
+func is_stick_colliding():
+	return stick_cast.is_colliding()
 
 func get_contact_normal():
 	return raycast.get_collision_normal()
