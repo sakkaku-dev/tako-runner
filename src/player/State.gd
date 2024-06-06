@@ -1,14 +1,17 @@
 class_name State
 extends Node
 
-func enter(p: Player):
-	pass
-
-func exit(p: Player):
+func process(delta: float):
 	pass
 	
-func process(p: Player, delta: float):
+func enter():
 	pass
-
-func handle(p: Player, ev: InputEvent):
+	
+func exit():
 	pass
+	
+func handle(event: InputEvent):
+	pass
+	
+func can_enter() -> bool:
+	return true
