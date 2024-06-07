@@ -106,13 +106,11 @@ _data = {
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_82u8f"]
 size = Vector2(10, 25)
 
-[node name="Player" type="CharacterBody2D" node_paths=PackedStringArray("input", "raycast", "ground_cast", "stick_cast")]
+[node name="Player" type="CharacterBody2D" node_paths=PackedStringArray("input", "raycast")]
 collision_layer = 2
 script = ExtResource("1_dx2uk")
 input = NodePath("PlayerInput")
 raycast = NodePath("CollisionShape2D/Tentacle")
-ground_cast = NodePath("GroundCast")
-stick_cast = NodePath("")
 
 [node name="Contact" type="Sprite2D" parent="."]
 top_level = true
@@ -140,9 +138,6 @@ position = Vector2(0, -3)
 texture = ExtResource("4_f6lx2")
 hframes = 10
 vframes = 2
-
-[node name="GroundCast" type="RayCast2D" parent="."]
-target_position = Vector2(0, 20)
 
 [node name="LeftWallCast" type="RayCast2D" parent="."]
 position = Vector2(0, -13)
@@ -180,7 +175,10 @@ tentacle_cast = NodePath("../../CollisionShape2D/Tentacle")
 
 [node name="Move" type="Node" parent="States" node_paths=PackedStringArray("tentacle_cast")]
 script = ExtResource("7_m2sg5")
+speed = null
+accel = null
 tentacle_cast = NodePath("../../CollisionShape2D/Tentacle")
+stick_delay = null
 
 [node name="Jump" type="Node" parent="States"]
 script = ExtResource("8_3trih")

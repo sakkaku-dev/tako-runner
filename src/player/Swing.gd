@@ -4,8 +4,13 @@ extends State
 @export var decrease_swing_dist := 50
 @export var stick_delay := 0.1
 @export var tentacle_cast: RayCast2D
+@export var short_pull_threshold := 0.2
+@export var enter_stick_threshold := 0.1
+@export var short_pull_speed := 600
 
 @export var pull_speed := 100
+@export var floor_pull_speed := 70
+
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 @onready var player: Player = owner
 
@@ -18,6 +23,7 @@ func enter():
 	swing_dist = 0.0
 	time = .0
 	swing_dist = player.get_contact_point().length()
+	print("SWING")
 
 func process(delta: float):
 	tentacle_cast.global_rotation = Vector2.DOWN.angle_to(player.global_position.direction_to(player.connected_point))
@@ -68,14 +74,18 @@ func process(delta: float):
 			
 		player.velocity.x += motion.x * swing_move_force
 	else:
-		player.velocity += dir * pull_speed
+		var pull = floor_pull_speed if normal.dot(Vector2.UP) == 1 else pull_speed
+		player.velocity += dir * pull
 	
-	if player.is_on_wall() or player.is_on_ceiling() or player.is_on_floor():
-		time += delta
-		#if time >= stick_delay:
-		player.state = Player.STICK
-	else:
-		time = .0
+	time += delta
+	if time >= enter_stick_threshold:
+		if player.is_on_wall() or player.is_on_ceiling() or player.is_on_floor():
+			player.state = Player.STICK
+
+func exit():
+	if time <= short_pull_threshold and player.get_contact_normal().dot(Vector2.UP) < 1:
+		var point = player.get_contact_point()
+		player.velocity += point.normalized() * short_pull_speed
 
 func handle(ev: InputEvent):
 	if ev.is_action_released("fire"):

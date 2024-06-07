@@ -3,11 +3,20 @@ extends State
 @export var speed := 300
 @export var accel := 800
 @export var tentacle_cast: RayCast2D
+@export var stick_delay := 0.05
 
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 @onready var player: Player = owner
 
+var time := 0.0
+
+func enter():
+	print("MOVE")
+	time = 0.0
+
 func process(delta: float):
+	time += delta
+	
 	var dir = player.global_position.direction_to(tentacle_cast.get_global_mouse_position())
 	tentacle_cast.global_rotation = Vector2.DOWN.angle_to(dir)
 	
@@ -24,12 +33,7 @@ func process(delta: float):
 	player.velocity.x = move_toward(player.velocity.x, motion_x * speed, accel * delta)
 	player.velocity += gravity
 	
-	#if p.is_on_wall() or player.is_on_ceiling():
-		##time += delta
-		##if time >= stick_delay:
-		#p.state = Player.State.STICK
-		
-	if not player.is_on_floor() and player.is_moving_against_wall() and player.velocity.y >= 0:
+	if not player.is_on_floor() and player.is_moving_against_wall_or_ceil() and time >= stick_delay:
 		player.state = Player.STICK
 
 func handle(event: InputEvent):

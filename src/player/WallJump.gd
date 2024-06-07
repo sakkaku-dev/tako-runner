@@ -6,6 +6,7 @@ extends State
 @onready var player: Player = owner
 
 func enter():
+	print("WALL_JUMP")
 	var dir = player.get_wall_collision()
 	if dir:
 		dir = dir.rotated(deg_to_rad(jump_angle) * -sign(dir.x))

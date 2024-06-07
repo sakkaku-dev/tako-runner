@@ -12,7 +12,6 @@ enum {
 
 @export var input: PlayerInput
 @export var raycast: RayCast2D
-@export var ground_cast: RayCast2D
 @export var stick_cast: RayCast2D
 
 @export var sticky_delay := 0.3
@@ -89,14 +88,22 @@ func _on_player_input_just_received(ev: InputEvent):
 	_get_state().handle(ev)
 
 func get_wall_collision():
+	var collisions = get_wall_collisions()
+	return Vector2.ZERO if collisions.is_empty() else collisions[0]
+	
+func get_wall_collisions():
+	var result = []
 	for cast in wall_casts:
 		if cast.is_colliding():
-			return cast.get_collision_normal()
+			result.append(cast.get_collision_normal())
 	
-	return Vector2.ZERO
+	return result
 
-func is_moving_against_wall():
-	return is_on_wall() and get_wall_collision()
+func is_moving_against_wall_or_ceil():
+	return (is_on_wall() or is_on_ceiling()) and get_wall_collision()
+
+func is_colliding_floor():
+	return bot_wall_cast.is_colliding()
 
 func remove_contact():
 	self.connected_point = null
