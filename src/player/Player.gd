@@ -35,7 +35,6 @@ enum {
 	STICK: $States/Stick,
 	JUMP: $States/Jump,
 	WALL_JUMP: $States/WallJump
-
 }
 
 var connected_point:

@@ -8,8 +8,9 @@ extends State
 @export var enter_stick_threshold := 0.1
 @export var short_pull_speed := 600
 
+@export var swing_pull_speed := 80
 @export var pull_speed := 100
-@export var floor_pull_speed := 70
+@export var floor_pull_speed := 50
 
 @onready var gravity = ProjectSettings.get("physics/2d/default_gravity_vector") * ProjectSettings.get("physics/2d/default_gravity")
 @onready var player: Player = owner
@@ -70,7 +71,7 @@ func process(delta: float):
 		player.velocity += dir * tension * delta
 	
 		if Input.is_action_pressed("pull"):
-			player.velocity += dir * pull_speed
+			player.velocity += dir * swing_pull_speed
 			
 		player.velocity.x += motion.x * swing_move_force
 	else:
